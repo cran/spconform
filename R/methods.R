@@ -1,8 +1,7 @@
 #' Print Method for spconform Objects
 #'
-#' Prints a concise summary of an \code{spconform} prediction object, including
-#' the data type, target coverage level, total number of prediction points, and
-#' a preview of the first few prediction intervals.
+#' Displays a concise summary of the conformal prediction object including
+#' model type, nominal target coverage, and a preview table of prediction intervals.
 #'
 #' @param x An object of class \code{"spconform"}.
 #' @param ... Further arguments passed to or from other methods.
@@ -16,7 +15,7 @@ print.spconform <- function(x, ...) {
   cat(sprintf("Number of prediction points: %d\n", n))
   k <- min(n, 6)
   df <- data.frame(
-    pred  = round(x$pred[seq_len(k)], 3),
+    pred = round(x$pred[seq_len(k)], 3),
     lower = round(x$lower[seq_len(k)], 3),
     upper = round(x$upper[seq_len(k)], 3)
   )
@@ -24,7 +23,6 @@ print.spconform <- function(x, ...) {
   if (n > k) cat(sprintf("... (%d more)\n", n - k))
   invisible(x)
 }
-
 
 #' Summary Method for spconform Objects
 #'
@@ -35,106 +33,55 @@ print.spconform <- function(x, ...) {
 #' @param ... Further arguments passed to or from other methods.
 #'
 #' @return Invisibly returns the input object \code{object}.
-#' @importFrom stats median
 #' @export
 summary.spconform <- function(object, ...) {
   width <- object$upper - object$lower
   cat("spconform summary\n")
   cat("------------------\n")
-  cat("Type:                 ", object$type, "\n")
-  cat("Target coverage:      ", sprintf("%.1f%%", 100 * (1 - object$alpha)), "\n")
-  cat("Mean interval width:  ", round(mean(width, na.rm = TRUE), 4), "\n")
-  cat("Median interval width:", round(stats::median(width, na.rm = TRUE), 4), "\n")
+  cat("Type:              ", object$type, "\n")
+  cat("Target coverage:   ", sprintf("%.1f%%", 100 * (1 - object$alpha)), "\n")
+  cat("Mean interval width:", round(mean(width), 4), "\n")
+  cat("Median interval width:", round(stats::median(width), 4), "\n")
   invisible(object)
 }
 
-
 #' Plot Prediction Intervals for spconform Objects
 #'
-#' Visualizes the conformal prediction intervals and point predictions across
-#' target locations or areal units. Optionally overlays true observations if provided.
+#' Plots point predictions and conformal prediction intervals across observation
+#' indices, optionally overlaying true target values for visual evaluation.
 #'
 #' @param x An object of class \code{"spconform"}.
-#' @param y_true Optional numeric vector of true observed responses matching \code{x$pred}.
-#' @param ... Additional arguments passed to \code{\link[graphics]{plot}}.
+#' @param y_true Optional numeric vector of true observed responses at prediction locations.
+#' @param ... Further graphical parameters passed to \code{\link[graphics]{plot}}.
 #'
 #' @return Invisibly returns the input object \code{x}.
-#' @importFrom graphics plot points segments legend
+#' @importFrom graphics points segments legend
 #' @export
 plot.spconform <- function(x, y_true = NULL, ...) {
   n <- length(x$pred)
   ord <- seq_len(n)
-  
-  ## حماية استخراج القيم وحساب نطاق المحور الصادي
-  all_vals <- c(x$pred, x$lower, x$upper)
+  ylim <- range(c(x$lower, x$upper, x$pred, y_true))
+  plot(ord, x$pred, ylim = ylim, pch = 19, xlab = "Index", ylab = "Predicted value",
+       main = paste0("spconform (", x$type, ") - ",
+                      round(100 * (1 - x$alpha)), "% intervals"), ...)
+  segments(ord, x$lower, ord, x$upper, col = "grey50")
   if (!is.null(y_true)) {
-    all_vals <- c(all_vals, y_true)
+    points(ord, y_true, col = "red", pch = 4)
+    legend("topright", legend = c("prediction", "truth"),
+           pch = c(19, 4), col = c("black", "red"), bty = "n")
   }
-  
-  finite_vals <- all_vals[is.finite(all_vals)]
-  if (length(finite_vals) == 0) {
-    ylim_val <- c(0, 1)
-  } else {
-    ylim_val <- range(finite_vals, na.rm = TRUE)
-    pad <- diff(ylim_val) * 0.05
-    if (pad == 0) pad <- 0.5
-    ylim_val <- c(ylim_val[1] - pad, ylim_val[2] + pad)
-  }
-  
-  ## إعداد لوحة الرسم الأساسية
-  graphics::plot(
-    ord, x$pred,
-    ylim = ylim_val,
-    pch  = 19,
-    xlab = if (identical(x$type, "areal")) "Areal Unit Index" else "Prediction Index",
-    ylab = "Predicted / Response Value",
-    main = paste0("spconform (", x$type, ") - ", round(100 * (1 - x$alpha)), "% intervals"),
-    ...
-  )
-  
-  ## رسم شرائط الفترات التنبؤية مع الحماية من القيم اللانهائية
-  graphics::segments(
-    ord, pmax(x$lower, ylim_val[1]),
-    ord, pmin(x$upper, ylim_val[2]),
-    col = "grey50", lwd = 1.5
-  )
-  
-  ## إعادة إبراز نقاط التنبؤ
-  graphics::points(ord, x$pred, pch = 19, col = "black")
-  
-  ## إضافة القيم الحقيقية ودليل الرسم في حال تمريرها
-  if (!is.null(y_true)) {
-    graphics::points(ord, y_true, col = "red", pch = 4, lwd = 1.5)
-    graphics::legend(
-      "topright",
-      legend = c("Prediction", "Conformal Interval", "True Value"),
-      col    = c("black", "grey50", "red"),
-      pch    = c(19, NA, 4),
-      lty    = c(NA, 1, NA),
-      lwd    = c(NA, 1.5, 1.5),
-      bty    = "n",
-      cex    = 0.85
-    )
-  }
-  
   invisible(x)
 }
 
-
 #' Empirical Coverage and Average Interval Width for an spconform Object
-#'
-#' Computes the empirical coverage rate and mean interval width by comparing
-#' conformal prediction intervals against held-out ground truth responses.
 #'
 #' @param object An object of class \code{"spconform"}.
 #' @param y_true Numeric vector of true observed values at the prediction
-#'   locations. Must have the same length as \code{object$pred}.
+#'   locations, same length/order as \code{object$pred}.
 #'
-#' @return A named list with:
-#' \describe{
-#'   \item{coverage}{Proportion of true values falling within the prediction intervals.}
-#'   \item{mean_width}{Mean width of the prediction intervals.}
-#' }
+#' @return A named list with \code{coverage} (proportion of \code{y_true}
+#'   falling within \code{[lower, upper]}) and \code{mean_width} (average
+#'   interval width).
 #'
 #' @examples
 #' set.seed(1)
@@ -147,16 +94,95 @@ plot.spconform <- function(x, y_true = NULL, ...) {
 #'
 #' @export
 coverage_report <- function(object, y_true) {
-  if (!inherits(object, "spconform")) {
-    stop("'object' must be of class 'spconform'.")
-  }
-  if (length(y_true) != length(object$pred)) {
-    stop("length(y_true) must match length(object$pred).")
-  }
-  
+  if (!inherits(object, "spconform")) stop("'object' must be of class 'spconform'.")
   covered <- (y_true >= object$lower) & (y_true <= object$upper)
   list(
-    coverage   = mean(covered, na.rm = TRUE),
-    mean_width = mean(object$upper - object$lower, na.rm = TRUE)
+    coverage = mean(covered),
+    mean_width = mean(object$upper - object$lower)
   )
+}
+
+#' Coerce an spconform Object to a Data Frame
+#'
+#' Converts a conformal prediction output object of class \code{"spconform"}
+#' into a tidy \code{data.frame} containing coordinates (if present), point
+#' predictions, lower/upper bounds, and interval widths.
+#'
+#' @param x An object of class \code{"spconform"}.
+#' @param row.names \code{NULL} or a character vector giving row names.
+#' @param optional Logical; passed to \code{as.data.frame}.
+#' @param ... Additional arguments (currently unused).
+#'
+#' @return A \code{data.frame} with prediction columns \code{pred},
+#'   \code{lower}, \code{upper}, \code{width}, and any coordinate columns.
+#' @export
+as.data.frame.spconform <- function(x, row.names = NULL, optional = FALSE, ...) {
+  df <- data.frame(
+    pred  = x$pred,
+    lower = x$lower,
+    upper = x$upper,
+    width = x$upper - x$lower
+  )
+  if (!is.null(x$s0)) {
+    coords <- as.data.frame(x$s0)
+    if (ncol(coords) == 2 && all(names(coords) %in% c("V1", "V2"))) {
+      names(coords) <- c("x", "y")
+    }
+    df <- cbind(coords, df)
+  }
+  as.data.frame(df, row.names = row.names, optional = optional, ...)
+}
+
+#' Extract Predictions and Intervals from an spconform Object
+#'
+#' Extracts point predictions or prediction interval bounds from a fitted
+#' \code{spconform} object.
+#'
+#' @param object An object of class \code{"spconform"}.
+#' @param interval Character string specifying the type of prediction intervals
+#'   to extract: \code{"none"} (default, point predictions only) or
+#'   \code{"prediction"} (matrix with fit, lwr, upr).
+#' @param ... Further arguments passed to or from other methods.
+#'
+#' @return If \code{interval = "none"}, a numeric vector of point predictions.
+#'   If \code{interval = "prediction"}, a numeric matrix with columns \code{fit},
+#'   \code{lwr}, and \code{upr}.
+#' @export
+predict.spconform <- function(object, interval = c("none", "prediction"), ...) {
+  interval <- match.arg(interval)
+  if (interval == "none") {
+    return(object$pred)
+  } else {
+    res <- cbind(fit = object$pred, lwr = object$lower, upr = object$upper)
+    return(res)
+  }
+}
+
+#' Extract Residuals from an spconform Object
+#'
+#' Calculates prediction residuals (observed minus fitted values) or
+#' nonconformity scores for an \code{spconform} object given true responses.
+#'
+#' @param object An object of class \code{"spconform"}.
+#' @param y_true Numeric vector of true observed responses at prediction locations.
+#' @param type Character string indicating residual type: \code{"response"}
+#'   (raw residuals \eqn{y - \hat{y}}) or \code{"abs"} (absolute nonconformity scores
+#'   \eqn{|y - \hat{y}|}).
+#' @param ... Further arguments passed to or from other methods.
+#'
+#' @return A numeric vector of residuals.
+#' @export
+residuals.spconform <- function(object, y_true, type = c("response", "abs"), ...) {
+  if (missing(y_true) || is.null(y_true)) {
+    stop("Argument 'y_true' must be provided to compute prediction residuals.")
+  }
+  if (length(y_true) != length(object$pred)) {
+    stop("Length of 'y_true' must match the number of predictions.")
+  }
+  type <- match.arg(type)
+  res <- y_true - object$pred
+  if (type == "abs") {
+    res <- abs(res)
+  }
+  res
 }

@@ -10,18 +10,15 @@ coverage_report(object, y_true)
 \item{object}{An object of class \code{"spconform"}.}
 
 \item{y_true}{Numeric vector of true observed values at the prediction
-locations. Must have the same length as \code{object$pred}.}
+locations, same length/order as \code{object$pred}.}
 }
 \value{
-A named list with:
-\describe{
-  \item{coverage}{Proportion of true values falling within the prediction intervals.}
-  \item{mean_width}{Mean width of the prediction intervals.}
-}
+A named list with \code{coverage} (proportion of \code{y_true}
+  falling within \code{[lower, upper]}) and \code{mean_width} (average
+  interval width).
 }
 \description{
-Computes the empirical coverage rate and mean interval width by comparing
-conformal prediction intervals against held-out ground truth responses.
+Empirical Coverage and Average Interval Width for an spconform Object
 }
 \examples{
 set.seed(1)

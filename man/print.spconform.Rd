@@ -15,7 +15,6 @@
 Invisibly returns the input object \code{x}.
 }
 \description{
-Prints a concise summary of an \code{spconform} prediction object, including
-the data type, target coverage level, total number of prediction points, and
-a preview of the first few prediction intervals.
+Displays a concise summary of the conformal prediction object including
+model type, nominal target coverage, and a preview table of prediction intervals.
 }

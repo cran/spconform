@@ -2,8 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{spatial_kernel_weights}
 \alias{spatial_kernel_weights}
-\title{Compute Gaussian-kernel spatial weights between a target location and a
-set of reference locations}
+\title{Spatial Gaussian Kernel Proximity Weights}
 \usage{
 spatial_kernel_weights(
   s0,
@@ -41,8 +40,8 @@ A numeric vector of weights (not necessarily summing to one),
   are spatially (and, if requested, temporally) closer to \code{s0}.
 }
 \description{
-Compute Gaussian-kernel spatial weights between a target location and a
-set of reference locations
+Computes Gaussian-kernel spatial weights between a target location and a
+set of reference locations.
 }
 \details{
 Weights are computed as

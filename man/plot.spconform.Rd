@@ -9,14 +9,14 @@
 \arguments{
 \item{x}{An object of class \code{"spconform"}.}
 
-\item{y_true}{Optional numeric vector of true observed responses matching \code{x$pred}.}
+\item{y_true}{Optional numeric vector of true observed responses at prediction locations.}
 
-\item{...}{Additional arguments passed to \code{\link[graphics]{plot}}.}
+\item{...}{Further graphical parameters passed to \code{\link[graphics]{plot}}.}
 }
 \value{
 Invisibly returns the input object \code{x}.
 }
 \description{
-Visualizes the conformal prediction intervals and point predictions across
-target locations or areal units. Optionally overlays true observations if provided.
+Plots point predictions and conformal prediction intervals across observation
+indices, optionally overlaying true target values for visual evaluation.
 }

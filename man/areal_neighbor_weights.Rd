@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{areal_neighbor_weights}
 \alias{areal_neighbor_weights}
-\title{Compute neighbourhood-based weights for areal (lattice) data}
+\title{Areal (Lattice) Graph Distance Proximity Weights}
 \usage{
 areal_neighbor_weights(i0, adjacency, decay = 1)
 }
@@ -17,14 +17,12 @@ matrix). Row/column \code{i0} corresponds to the target unit.}
 from \code{i0}; larger values down-weight distant neighbours more
 aggressively. Defaults to 1.}
 }
-\description{
-Compute neighbourhood-based weights for areal (lattice) data
+\value{
+A numeric vector of length \code{nrow(adjacency)} with weights
+  based on graph distance from \code{i0} (self-weight is 0, i.e. the
+  target unit is excluded from its own calibration set).
 }
-\examples{
-adj <- matrix(c(0, 1, 0,
-                1, 0, 1,
-                0, 1, 0), nrow = 3, byrow = TRUE)
-w <- areal_neighbor_weights(1, adj, decay = 0.5)
-print(w)
-
+\description{
+Computes neighbourhood-based weights for areal (lattice) data based on
+shortest-path graph distances.
 }

@@ -1,5 +1,7 @@
-#' Compute Gaussian-kernel spatial weights between a target location and a
-#' set of reference locations
+#' Spatial Gaussian Kernel Proximity Weights
+#'
+#' Computes Gaussian-kernel spatial weights between a target location and a
+#' set of reference locations.
 #'
 #' @param s0 A numeric vector (or 1-row matrix) giving the coordinates of the
 #'   target (prediction) location.
@@ -77,7 +79,10 @@ spatial_kernel_weights <- function(s0, s, bandwidth = NULL,
   w
 }
 
-#' Compute neighbourhood-based weights for areal (lattice) data
+#' Areal (Lattice) Graph Distance Proximity Weights
+#'
+#' Computes neighbourhood-based weights for areal (lattice) data based on
+#' shortest-path graph distances.
 #'
 #' @param i0 Integer index of the target (unobserved / held-out) areal unit.
 #' @param adjacency A square 0/1 (or weighted) adjacency matrix describing
@@ -87,12 +92,9 @@ spatial_kernel_weights <- function(s0, s, bandwidth = NULL,
 #'   from \code{i0}; larger values down-weight distant neighbours more
 #'   aggressively. Defaults to 1.
 #'
-#' @examples
-#' adj <- matrix(c(0, 1, 0,
-#'                 1, 0, 1,
-#'                 0, 1, 0), nrow = 3, byrow = TRUE)
-#' w <- areal_neighbor_weights(1, adj, decay = 0.5)
-#' print(w)
+#' @return A numeric vector of length \code{nrow(adjacency)} with weights
+#'   based on graph distance from \code{i0} (self-weight is 0, i.e. the
+#'   target unit is excluded from its own calibration set).
 #'
 #' @export
 areal_neighbor_weights <- function(i0, adjacency, decay = 1) {

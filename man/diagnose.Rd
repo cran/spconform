@@ -2,64 +2,83 @@
 % Please edit documentation in R/diagnose.R
 \name{diagnose}
 \alias{diagnose}
-\title{Comprehensive Diagnostic Report for spconform Objects}
+\title{Comprehensive Diagnostic Suite for Spatial Conformal Prediction Objects}
 \usage{
 diagnose(object, y_true, s_test = NULL, n_bins = 4, plot = TRUE, ...)
 }
 \arguments{
-\item{object}{An object of class \code{"spconform"}, typically the output
-of \code{scp_geostatistical()} or \code{scp_areal()}.}
+\item{object}{An object of class \code{"spconform"}, typically output from
+\code{\link{scp_geostatistical}} or \code{\link{scp_areal}}.}
 
-\item{y_true}{Numeric vector of true response values at the prediction
-locations. Must have the same length as \code{object$pred}.}
+\item{y_true}{Numeric vector of true observed responses at target prediction locations.
+Must have the same length as \code{object$pred}.}
 
-\item{s_test}{Optional numeric matrix of prediction coordinates
-(one row per location). Required for spatial diagnostics.}
+\item{s_test}{Optional numeric matrix of target prediction coordinates
+(\eqn{m \times p}). Required for spatial stratification, boundary effects,
+and spatial autocorrelation diagnostics.}
 
-\item{n_bins}{Integer; number of spatial bins for conditional coverage
-(default 4).}
+\item{n_bins}{Integer; number of spatial bins per dimension for conditional coverage (default 4).}
 
-\item{plot}{Logical; if \code{TRUE} (default), generates a multi-panel
-diagnostic plot.}
+\item{plot}{Logical; if \code{TRUE} (default), generates a multi-panel diagnostic plot.}
 
-\item{...}{Additional arguments passed to plotting functions.}
+\item{...}{Additional graphical parameters passed to internal plotting methods.}
 }
 \value{
-A list (invisibly) containing:
+An S3 object of class \code{"spconform_diagnose"} containing:
 \describe{
-  \item{marginal}{Marginal coverage and mean width.}
-  \item{conditional}{Coverage and width by spatial bin.}
-  \item{boundary}{Coverage by distance from convex hull boundary.}
-  \item{scores}{Summary of nonconformity score distribution.}
+  \item{marginal}{List with coverage, mean width, median width, sd width, Winkler score, and sample size.}
+  \item{conditional}{Data frame of coverage and widths partitioned by spatial quadrant.}
+  \item{boundary}{List comparing empirical metrics between interior and boundary units.}
+  \item{spatial_autocorr}{List containing Moran's I statistic, expected value, z-score, and p-value.}
+  \item{scores}{Summary of nonconformity score moments and quantiles.}
+  \item{alpha}{Miscoverage level of the evaluated object.}
 }
 }
 \description{
-Produces a multi-panel diagnostic report assessing marginal coverage,
-conditional coverage by spatial strata, boundary effects, and the
-distribution of nonconformity scores.
+Produces a comprehensive multi-panel diagnostic report evaluating marginal
+coverage validity, Winkler Interval Score (WIS) sharpness, conditional coverage
+across spatial strata, boundary proximity effects, spatial residual autocorrelation
+(Moran's I), and nonconformity score distributions.
 }
 \details{
-The conditional coverage analysis partitions the prediction locations
-into \code{n_bins} equal-area spatial quadrants and reports coverage
-within each. The boundary analysis classifies points by their distance
-to the convex hull of the training data (for geostatistical output).
-
-If empirical coverage exceeds the nominal target by more than 5
-percentage points, a message is issued suggesting bandwidth
-reduction for tighter intervals.
+The diagnostic suite performs five rigorous audits on the prediction intervals:
+\enumerate{
+  \item \strong{Marginal Validity & Sharpness}: Evaluates empirical coverage
+    \eqn{\frac{1}{m}\sum \mathbf{1}(Y_i \in C(s_i))}, mean/median interval width,
+    and the strictly proper \strong{Winkler Interval Score (WIS)}:
+    \deqn{\text{WIS}_\alpha(l, u, y) = (u - l) + \frac{2}{\alpha}(l - y)\mathbf{1}(y < l) + \frac{2}{\alpha}(y - u)\mathbf{1}(y > u)}
+  \item \strong{Conditional Spatial Stratification}: Partitions the 2D spatial domain
+    into \eqn{\text{n\_bins} \times \text{n\_bins}} equal-area quadrants and assesses local coverage.
+  \item \strong{Convex Hull Boundary Proximity}: Assesses whether edge-effect
+    extrapolations degrade coverage near the boundary of the spatial domain.
+  \item \strong{Spatial Autocorrelation (Moran's I)}: Evaluates whether prediction
+    miscoverages or nonconformity scores exhibit residual spatial clustering via Moran's \eqn{I}.
+  \item \strong{Score Distribution}: Analyzes empirical quantiles and normality/QQ structure.
+}
 }
 \examples{
-# Minimal reproducible example (< 0.1s execution time)
-set.seed(123)
-s_tr <- matrix(runif(40), ncol = 2)
-y_tr <- rnorm(20)
-s_te <- matrix(runif(20), ncol = 2)
-y_te <- rnorm(10)
+set.seed(42)
+n <- 100
+s_tr <- matrix(runif(n * 2), n, 2)
+y_tr <- sin(3 * s_tr[, 1]) + rnorm(n, sd = 0.2)
+s_te <- matrix(runif(30 * 2), 30, 2)
+y_te <- sin(3 * s_te[, 1]) + rnorm(30, sd = 0.2)
 
-pfun <- function(s_train, y_train, s_new) rep(mean(y_train), nrow(s_new))
-
+pfun <- function(s_tr, y_tr, s_new) rep(mean(y_tr), nrow(s_new))
 out <- scp_geostatistical(s_tr, y_tr, s_te, pfun, alpha = 0.1)
-diag_res <- diagnose(out, y_te, s_te, plot = FALSE)
+
+diag_res <- diagnose(out, y_true = y_te, s_test = s_te, plot = FALSE)
 print(diag_res)
 
+}
+\references{
+Winkler, R. L. (1972). "A Decision-Theoretic Approach to Interval Estimation."
+\emph{Journal of the American Statistical Association}, 67(337), 187-191.
+
+Mao, R., Martin, R., and Reich, B. J. (2023). "Valid Conformal Prediction
+for Dependent Data." \emph{Journal of the American Statistical Association},
+\doi{10.1080/01621459.2022.2147531}.
+}
+\seealso{
+\code{\link{scp_geostatistical}}, \code{\link{scp_areal}}, \code{\link{coverage_report}}
 }

@@ -110,13 +110,13 @@ scp_areal <- function(y, X = NULL, adjacency, pred_fun = NULL,
     others <- setdiff(seq_len(n), i)
     
     r_i <- resid_abs[others]
-    # التأكد من خلوه من القيم المفقودة
+    # Check for missing values in nonconformity scores
     if (anyNA(r_i)) {
       warning(sprintf("Nonconformity scores contain NA for unit %d; using unweighted quantile.", i))
       w_i <- rep(1, length(others))
     } else {
       w_i <- w[others] + 1e-12
-      # إذا كانت الأوزان الفعلية كلها صفراً تقريباً، استخدم أوزاناً متساوية
+      # Fall back to uniform weights if total neighbourhood weight is negligible
       if (sum(w_i) < 1e-10 || max(w_i) < 1e-12) {
         warning(sprintf("Unit %d has negligible neighbourhood weights; falling back to unweighted quantile.", i))
         w_i <- rep(1, length(others))
@@ -131,7 +131,7 @@ scp_areal <- function(y, X = NULL, adjacency, pred_fun = NULL,
     q_level <- min(1, (1 - alpha) * (length(r_sorted) + 1) / length(r_sorted))
     q_idx <- which(cw >= q_level)[1]
     if (is.na(q_idx)) {
-      # إذا لم يتم العثور على كمّاء، استخدم أكبر قيمة (حالة متطرفة)
+      # Fallback to maximum score in boundary/degenerate cases
       q_idx <- length(r_sorted)
     }
     qhat <- r_sorted[q_idx]

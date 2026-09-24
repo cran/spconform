@@ -1,7 +1,7 @@
 # spconform
 
 [![R-CMD-check](https://github.com/amjed-droid/spconform/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/amjed-droid/spconform/actions/workflows/R-CMD-check.yaml)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://cran.r-project.org/web/licenses/GPL-3)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21862024.svg)](https://doi.org/10.5281/zenodo.21862024)
 
 **Conformal Prediction for Spatially and Spatio-Temporally Dependent Data in R**
@@ -21,28 +21,22 @@ Standard conformal prediction assumes exchangeable data — an assumption routin
 | Areal (lattice) | — | — | — | — | **✓** |
 | Spatio-temporal | — | — (temp. only) | — | — | **✓ (opt.)** |
 | Model-agnostic | ✓ | ✓ | ✓ | ✓ | **✓** |
-| Unit-tested / CRAN-ready | ✓ | ✓ | — | — | **✓** |
+| Unit-tested / CRAN | ✓ | ✓ | — | — | **✓** |
 
 `spconform` is, to our knowledge, the first R package to offer conformal prediction spanning both major spatial data structures with optional spatio-temporal extension.
 
-&gt; **Status:** `spconform` has passed `R CMD check --as-cran` with 0 errors,
-&gt; 0 warnings, and 0 notes on Windows 11 (R 4.6.1), win-builder (R-devel),
-&gt; and R-hub v2 (Linux, Windows, macOS, donttest). The package is CRAN-ready
-&gt; and will be submitted to CRAN as soon as the submission form re-opens.
-&gt; A permanent, citable snapshot of version 0.1.0 is archived on Zenodo
-&gt; (DOI above). The accompanying manuscript is currently in preparation
-&gt; for submission to the *Journal of Statistical Software*.
+> **Status:** `spconform` v0.1.1 is available on CRAN. It has passed strict `R CMD check --as-cran` with 0 errors, 0 warnings, and 0 notes across Windows, macOS, and Linux (R-devel & R-release). A permanent, citable snapshot of the initial release is archived on Zenodo (DOI above).
 
 ---
 
 ## Installation
 
 ```r
-# Install the development version from GitHub
-remotes::install_github("amjed-droid/spconform")
+# Install release version from CRAN:
+install.packages("spconform")
 
-# Once accepted on CRAN:
-# install.packages("spconform")
+# Or the development version from GitHub:
+remotes::install_github("amjed-droid/spconform")
 ```
 
 **Dependencies: The package imports only stats (base R). Suggested
@@ -88,6 +82,15 @@ coverage_report(out, y[-idx])
 #> [1] 0.957
 #> $mean_width
 #> [1] 2.21
+
+# spconform objects support standard S3 methods:
+predict(out, interval = "prediction")
+#>   fit   lwr   upr
+#> 1 5.30  2.85  7.45
+#> 2 5.12  2.70  7.32
+
+# Extract residuals
+residuals(out, y_true = y[-idx], type = "abs")
 ```
 
 ### 2. Comprehensive Spatial Diagnostics
@@ -95,10 +98,11 @@ coverage_report(out, y[-idx])
 `spconform` includes a multi-panel diagnostic suite (`diagnose()`) to evaluate marginal coverage, conditional coverage across spatial strata, boundary effects, and the distribution of nonconformity scores:
 
 ```r
-# Run diagnostics and produce publication-quality multi-panel plot
-diag <- diagnose(out, y_true = y[-idx], s_test = s[-idx], plot = TRUE)
+# Generate a comprehensive 4-panel diagnostic plot
+diag <- diagnose(out, y_true = y[-idx], s_test = s[-idx])
+plot(diag) # S3 plot method for visual inspection
 
-# View textual diagnostic summary
+# View S3 printed summary including Moran's I
 print(diag)
 #> === spconform Diagnostic Report ===
 #> 
@@ -204,7 +208,7 @@ coverage_report(out_st, y[-train_idx])
 ## Quality Assurance
 
 `spconform` has been rigorously tested across all major platforms to ensure 
-CRAN-readiness:
+CRAN readiness:
 
 | Platform | R Version | Status |
 |----------|-----------|--------|
@@ -222,7 +226,8 @@ on all tested platforms. Continuous integration is monitored via GitHub Actions.
 - **Model-agnostic**: Works with any user-supplied point predictor (kriging, GAM, random forest, linear model, ...).
 - **Finite-sample coverage**: Maintains coverage close to nominal level regardless of predictor misspecification (under local exchangeability).
 - **Lightweight**: Imports only `stats`; no heavy spatial-modelling dependencies.
-- **Fully documented**: S3 methods (`print`, `summary`, `plot`, `coverage_report`) included, plus a full introductory vignette.
+- **Idiomatic R Design**: Seamless integration with the R ecosystem via full support for standard S3 generics (`predict`, `residuals`, `plot`, `print`, `summary`, `as.data.frame`).
+- **Advanced Diagnostics**: Built-in 4-panel visual diagnostics including evaluation of spatial fairness and Moran's $I$ test for residual spatial autocorrelation.
 
 ---
 
@@ -231,12 +236,8 @@ on all tested platforms. Continuous integration is monitored via GitHub Actions.
 If you use `spconform` in your research, please cite:
 
 > Jabbar, A. S. (2026). spconform: Conformal Prediction for Spatially and
-> Spatio-Temporally Dependent Data in R (Version 0.1.0) [Computer software].
-> Zenodo. https://doi.org/10.5281/zenodo.21862025
->
-> *A companion manuscript describing the package methodology is currently
-> submitted to the Journal of Statistical Software and will be cited here
-> upon acceptance.*
+> Spatio-Temporally Dependent Data in R (Version 0.1.1) [Computer software].
+> Zenodo. https://doi.org/10.5281/zenodo.21862024
 
 ```r
 citation("spconform")
@@ -247,8 +248,10 @@ citation("spconform")
 ## Getting help
 
 - **Bug reports & feature requests**: [GitHub Issues](https://github.com/amjed-droid/spconform/issues)
-- **Documentation**: `?scp_geostatistical`, `?scp_areal`, `vignette("spconform-intro", package = "spconform")`
-- **Reproducible scripts**: See `inst/scripts/` in the package source.
+- **Documentation & Walkthroughs**: `?scp_geostatistical`, `?scp_areal`, `?diagnose`, `vignette("spconform-intro", package = "spconform")`
+- **Questions & Discussions**: [GitHub Issues](https://github.com/amjed-droid/spconform/issues)
+- **Author Contact**: Ahmed Sattar Jabbar ([ahmed.state.me@gmail.com](mailto:ahmed.state.me@gmail.com))
+- **Reproducible scripts**: See `inst/scripts/` in the package source for full replication materials.
 
 ---
 
